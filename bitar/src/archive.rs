@@ -17,15 +17,25 @@ impl<R> ArchiveError<R> {
         Self::InvalidArchive(err.into())
     }
 }
-impl<R> std::error::Error for ArchiveError<R> where R: std::error::Error {}
+impl<R> std::error::Error for ArchiveError<R>
+where
+    R: std::error::Error + 'static,
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            ArchiveError::InvalidArchive(err) => Some(err.as_ref()),
+            ArchiveError::ReaderError(err) => Some(err),
+        }
+    }
+}
 impl<R> fmt::Display for ArchiveError<R>
 where
     R: std::error::Error,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidArchive(err) => write!(f, "invalid archive: {}", err),
-            Self::ReaderError(err) => write!(f, "reader error: {}", err),
+            Self::InvalidArchive(_) => write!(f, "invalid archive"),
+            Self::ReaderError(_) => write!(f, "reader error"),
         }
     }
 }

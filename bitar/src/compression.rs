@@ -9,13 +9,21 @@ pub enum CompressionError {
     #[cfg(feature = "lzma-compression")]
     LZMA(lzma::LzmaError),
 }
-impl std::error::Error for CompressionError {}
+impl std::error::Error for CompressionError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            CompressionError::Io(err) => Some(err),
+            #[cfg(feature = "lzma-compression")]
+            CompressionError::LZMA(err) => Some(err),
+        }
+    }
+}
 impl fmt::Display for CompressionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Io(err) => write!(f, "i/o error: {}", err),
+            Self::Io(_) => write!(f, "i/o error"),
             #[cfg(feature = "lzma-compression")]
-            Self::LZMA(err) => write!(f, "LZMA error: {}", err),
+            Self::LZMA(_) => write!(f, "LZMA error"),
         }
     }
 }

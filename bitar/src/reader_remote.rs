@@ -17,13 +17,20 @@ pub enum ReaderRemoteError {
     RequestNotClonable,
     Http(reqwest::Error),
 }
-impl std::error::Error for ReaderRemoteError {}
+impl std::error::Error for ReaderRemoteError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            ReaderRemoteError::Http(err) => Some(err),
+            ReaderRemoteError::UnexpectedEnd | ReaderRemoteError::RequestNotClonable => None,
+        }
+    }
+}
 impl std::fmt::Display for ReaderRemoteError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::UnexpectedEnd => write!(f, "unexpected end"),
             Self::RequestNotClonable => write!(f, "request is not clonable"),
-            Self::Http(err) => write!(f, "http error: {}", err),
+            Self::Http(_) => write!(f, "http error"),
         }
     }
 }
